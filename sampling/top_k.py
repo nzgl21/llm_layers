@@ -24,14 +24,13 @@ def top_k_sampling(
     assert 0 < k <= vocab_size, f"k должен быть в пределах (0, {vocab_size}]"
     assert temperature > 0, "Температура должна быть положительной!"
     
+    #Оставляем top k элементов
+    sorted_logits, sorted_idx = logits.topk(k=k, dim=-1)
+    
     if temperature != 1.0:
         logits = logits / temperature
     
-    sorted_logits, sorted_idx = logits.sort(dim=-1, descending=True)
-    sorted_probs = torch.zeros_like(sorted_logits)
-    sorted_probs[..., :k+1] = F.softmax(sorted_logits[..., :k+1], dim=-1)
-
-    
+    sorted_probs = F.softmax(sorted_logits, dim=-1)
     sampled = sorted_probs.multinomial(num_samples=1)
     
     out = torch.gather(sorted_idx, dim=-1, index=sampled)
@@ -42,5 +41,5 @@ def top_k_sampling(
 if __name__ == "__main__":
     
     x = torch.randn((2, 8))    
-    print(top_k_sampling(x, temperature=-1))
+    print(top_k_sampling(x, temperature=1))
     
